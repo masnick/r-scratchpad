@@ -1,0 +1,71 @@
+---
+title: "CSV write speed"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Generate test data
+
+Generate a test dataset (from https://kbroman.org/blog/2017/05/11/reading/writing-biggish-data-revisited/):
+
+```{r}
+n_ind <- 500
+n_snps <- 1e5 / 5
+ind_names <- paste0("ind", 1:n_ind)
+snp_names <- paste0("snp", 1:n_snps)
+sigX <- matrix(rnorm(n_ind*n_snps), nrow=n_ind)
+sigY <- matrix(rnorm(n_ind*n_snps), nrow=n_ind)
+dimnames(sigX) <- list(ind_names, paste0(snp_names, ".X"))
+dimnames(sigY) <- list(ind_names, paste0(snp_names, ".Y"))
+db <- cbind(data.frame(id=ind_names, stringsAsFactors=FALSE),
+            sigX, sigY)
+
+csv_file <- "db.csv"
+```
+
+# `fwrite()` test
+
+```{r}
+library(data.table)
+```
+## Single-threaded
+
+```{r}
+system.time(
+  fwrite(db, csv_file, nThread = 1)  
+)
+```
+
+
+## Multi-threaded (8)
+```{r}
+system.time(
+  fwrite(db, csv_file, nThread = 8)
+)
+```
+
+
+# `readr::write_csv()` test
+
+API docs: https://readr.tidyverse.org/reference/write_delim.html
+
+```{r}
+library(readr)
+```
+
+```{r}
+system.time(
+  write_csv(db, path=csv_file)
+)
+```
+
+
+# Cleanup
+
+```{r}
+if (file.exists(csv_file)) {
+  file.remove(csv_file)
+}
+```
+
