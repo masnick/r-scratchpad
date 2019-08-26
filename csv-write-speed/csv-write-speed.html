@@ -1663,7 +1663,7 @@ csv_file &lt;- &quot;db.csv&quot;</code></pre>
   fwrite(db, csv_file, nThread = 1)  
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##   7.322   0.243   7.578</code></pre>
+##   7.553   0.223   7.797</code></pre>
 </div>
 <div id="multi-threaded-8" class="section level2">
 <h2>Multi-threaded (8)</h2>
@@ -1671,7 +1671,7 @@ csv_file &lt;- &quot;db.csv&quot;</code></pre>
   fwrite(db, csv_file, nThread = 8)
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##   8.005   0.301   4.361</code></pre>
+##   8.251   0.316   4.678</code></pre>
 </div>
 </div>
 <div id="readrwrite_csv-test" class="section level1">
@@ -1682,7 +1682,7 @@ csv_file &lt;- &quot;db.csv&quot;</code></pre>
   write_csv(db, path=csv_file)
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##  14.310   6.862  21.189</code></pre>
+##  15.126   9.845  25.219</code></pre>
 </div>
 <div id="cleanup" class="section level1">
 <h1>Cleanup</h1>

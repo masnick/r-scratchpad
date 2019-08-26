@@ -1,6 +1,4 @@
-*
-!*.Rmd
-!.gitignore
-!*.html
+*Rproj*
 *.nb.html
-!*.Rproj
+*.csv
+*.rds
