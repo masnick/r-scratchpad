@@ -1,0 +1,66 @@
+---
+title: "Date Fixer"
+output:
+  html_document:
+    df_print: paged
+  md_document:
+    variant: markdown_mmd
+---
+
+```{r setup, message=F}
+library(tidyverse)
+```
+
+
+```{r}
+df_messy_dates <- tribble(
+  ~col1_dt, ~col2_dt, ~other_data,
+  "2019-01-01", "2019-01-02", "a",
+  "2019-01-03", "1/4/2019", "b",
+  "01/05/2019", "2019-01-06", "c",
+  NA, "1/7/2019", "d",
+  "", "2019-01-08", "e"
+)
+
+df_messy_dates
+
+```
+
+```{r}
+fn_date_fixer <- function(col) { 
+  output <- c() 
+  for(cell in col) { 
+    if(is.na(cell) || cell == "") {
+      # "" will cause `lubridate` to fail, so replace with NA
+      output <- c(output, NA) 
+    }
+    else if(typeof(cell) == "character") { 
+      parsed <- readr::parse_date(cell, format="%Y-%m-%d") 
+      if(is.na(parsed)) { 
+        parsed <- readr::parse_date(cell, format="%m/%d/%Y") 
+      } 
+      if(is.na(parsed)) { 
+        stop(str_interp("Could not parse ${cell}")) 
+      } 
+      output <- c(output, parsed) 
+    } 
+    else { 
+      output <- c(output, cell) 
+    } 
+  } 
+  print(output)
+  print(lubridate::as_date(output))
+  return(lubridate::as_date(output)) 
+} 
+
+df_clean_dates <- df_messy_dates %>% 
+  mutate_at(
+    vars(ends_with("_dt")),
+    list( 
+      ~ fn_date_fixer(.)
+    )
+  )
+
+df_clean_dates
+```
+

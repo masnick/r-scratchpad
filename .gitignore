@@ -2,3 +2,4 @@
 *.nb.html
 *.csv
 *.rds
+.Rproj.user

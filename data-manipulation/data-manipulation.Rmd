@@ -1,0 +1,180 @@
+---
+title: "Data Manipulation"
+output:
+  md_document:
+    variant: markdown_mmd
+  html_document:
+    df_print: paged
+---
+
+## Setup
+
+```{r setup, message=FALSE}
+library(MASS) # Needed for `birthwt` dataset
+library(tidyverse)
+
+df <- birthwt
+```
+
+## Aggregating
+
+### Maximum value across rows
+
+```{r}
+df %>%
+  select(age, lwt) %>%
+  mutate(age = age * 5, test = 110) %>% # Make `age` column large enough to sometimes be > `lwt`
+  mutate(
+    row_max = pmax(age, lwt, test)
+  ) %>% 
+  head()
+```
+
+
+## Filtering
+
+### Select rows where variable contains string
+
+`str_detect()` allows you to filter strings with a regular expression. In this example, I use `a$`, which looks for the letter `a` at the end of each value for `Species`. This has the effect of filtering out all the rows with `Species == "versicolor"`.
+
+```{r}
+iris %>% 
+  filter(str_detect(Species, 'a$')) %>% 
+  select(Species) %>% 
+  table()
+```
+
+## Modifying
+
+### Update a subset of rows based on criteria
+
+#### Using `mutate()`
+
+The simplest way is to use `mutate()` and `case_when()`.
+
+```{r}
+df_example <- tibble(x = 1:5, y = c('a', 'b', 'c', 'd', 'e'))
+
+# A tibble: 5 x 2
+#       x y    
+#   <int> <chr>
+# 1     1 a    
+# 2     2 b    
+# 3     3 c    
+# 4     4 d    
+# 5     5 e 
+
+df_example <- df_example %>% 
+  mutate(
+    y = case_when(
+      x > 3 ~ 'hello',
+      TRUE ~ y # Without this, `y` will be `NA` for the first 3 rows
+    )
+  )
+
+df_example
+```
+
+You can also use `if_else()` to achieve a similar effect as `case_when()` if you don't need multiple cases.
+
+
+#### Using `mutate_at()`
+
+If you want to use `mutate_at()` the syntax is somewhat different:
+
+```{r}
+df_example <- tibble(x = 1:5, y = c('a', 'b', 'c', 'd', 'e'))
+
+# A tibble: 5 x 2
+#       x y    
+#   <int> <chr>
+# 1     1 a    
+# 2     2 b    
+# 3     3 c    
+# 4     4 d    
+# 5     5 e 
+
+df_example %>% 
+  mutate_at(
+    vars(x),
+    list(~ case_when(
+      . == 2 ~ 0L,
+      TRUE ~ .
+    ))
+  )
+```
+
+Note that you have to use `. == 2 ~ 0L` or `TRUE ~ as.numeric(.)` in this example to avoid a type error. I have no idea why R can't figure this out for itself, but it apparently can't.
+
+#### Masks
+
+You can also use a mask:
+
+```{r}
+df_example <- tibble(x = 1:5, y = c('a', 'b', 'c', 'd', 'e'))
+
+# A tibble: 5 x 2
+#       x y    
+#   <int> <chr>
+# 1     1 a    
+# 2     2 b    
+# 3     3 c    
+# 4     4 d    
+# 5     5 e 
+
+mask <- df_example$x > 3
+df_example[mask, 'y'] <- c('hello', 'goodbye')
+
+df_example
+```
+
+
+### Using other columns in `mutate()`, `mutate_at()`, or `mutate_all()`
+
+```{r}
+df_example <- tibble(x=1:5, y=10:14, z=100:104)
+df_example
+```
+
+This is simple for `mutate()`:
+
+```{r}
+df_example %>% 
+  mutate(
+    new_col = x + y
+  )
+```
+
+For `mutate_at()` and `mutate_all()`, it is a bit more complex:
+
+```{r}
+df_example %>% 
+  mutate_at(
+    vars(x, y),
+    ~ . + z
+  )
+```
+
+This complexity is because `mutate_at()` requires that you provide a function rather than simply providing an expression like `new_col = x + y`.
+
+The `~` character [is used in base R with formulas](https://stackoverflow.com/questions/56650810/what-does-the-tilde-mean-in-this-context-of-r-code), but is overloaded in `purrr` (one of the `tidyverse` packages) to implement anonymous functions (i.e. a function that's not assigned to a name).
+
+This is functinally equivalent to `~ . + z` but with more verbose syntax:
+
+```{r}
+f <- function(., other_col) . + other_col
+df_example %>% 
+  mutate_at(
+    vars(x, y),
+     f, other_col = quote(z)
+  )
+```
+
+The `quote()` function makes this somewhat confusing, and a technical explanation is beyond the scope of this guide. However, you can [read more about quoting in R here](https://tidyeval.tidyverse.org/sec-up-to-speed.html).
+
+
+
+
+## Miscellaneous
+
+- Convert column to vector: use `deframe()` with a Tibble.

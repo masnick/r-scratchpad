@@ -1,0 +1,142 @@
+---
+title: "Exploratory Data Analysis (EDA)"
+output:
+  md_document:
+    variant: markdown_mmd
+  html_document:
+    df_print: paged
+---
+
+```{r setup, message=FALSE}
+library(MASS) # Needed for `birthwt` dataset
+library(tidyverse)
+
+# Non-tidyverse packages
+library(skimr) # This appears to be tidyverse-adjacent
+library(summarytools)
+
+df <- birthwt
+df$race_factor <- factor(df$race)
+```
+
+## Initial exploration of a new dataset
+
+### `glimpse()` lists out columns, their types, and some example values
+
+This function is [part of `tibble`](https://tibble.tidyverse.org/reference/glimpse.html), the tidyverse extension of `data.frame`.
+
+```{r}
+df %>% glimpse()
+```
+
+### `summary()` shows summary stats
+
+This is part of base R and is a convenient, if not overly pretty, way of getting summary stats like mean, median, etc.
+
+```{r}
+df %>% summary()
+```
+
+### `table` to show frequency counts for a variable
+
+Also part of base R, this is another quick way to show frequency counts.
+
+```{r}
+df$race %>% table()
+```
+
+
+
+### `skimr`
+
+This is a tidy-compatible package for summarizing data.
+
+```{r}
+df %>% skimr::skim()
+```
+
+Here's what it looks like with a string variable (`Species`):
+
+```{r}
+iris %>% skimr::skim()
+```
+
+## Another option: `summarytools::dfSummary()`
+
+This is similar to `skimr::skim()`, but is less conservative about horizontal space and can in theory use image-based graphs rather than ASCII for histograms (though this requires X11, which doesn't work on my system for some reason):
+
+```{r}
+dfSummary(iris)
+```
+
+
+
+## Frequency counts of categorical variables
+
+When using R, I frequently miss Stata's `tab` function for summarizing categorical data. This is what it looks like:
+
+```
+. webuse iris
+(Iris data)
+
+. tab iris
+
+       Iris |
+    species |      Freq.     Percent        Cum.
+------------+-----------------------------------
+     setosa |         50       33.33       33.33
+ versicolor |         50       33.33       66.67
+  virginica |         50       33.33      100.00
+------------+-----------------------------------
+      Total |        150      100.00
+```
+
+To achieve this in R, the best thing I've found is [`summarytools::freq()`](https://github.com/dcomtois/summarytools):
+
+```{r}
+freq(iris$Species)
+```
+
+## Contingency tables ("2x2 tables")
+
+I also miss `tab2` from Stata, which looks like this:
+
+```
+. tab tobacco parent, col
+
++-------------------+
+| Key               |
+|-------------------|
+|     frequency     |
+| column percentage |
++-------------------+
+
+                      |   1 = either parent
+                      |        smoked
+        tobacco usage | nonsmokin    smoking |     Total
+----------------------+----------------------+----------
+         0 cigarettes |     5,177      4,292 |     9,469 
+                      |     70.49      56.06 |     63.13 
+----------------------+----------------------+----------
+1 to 7 cigarettes/day |     1,593      2,213 |     3,806 
+                      |     21.69      28.91 |     25.37 
+----------------------+----------------------+----------
+8 to 12 cigarettes/da |       378        672 |     1,050 
+                      |      5.15       8.78 |      7.00 
+----------------------+----------------------+----------
+more than 12 cigarett |       196        479 |       675 
+                      |      2.67       6.26 |      4.50 
+----------------------+----------------------+----------
+                Total |     7,344      7,656 |    15,000 
+                      |    100.00     100.00 |    100.00 
+```
+
+You can accomplish something similar with `summarytools::ctable()`
+
+```{r}
+summarytools::ctable(tobacco$smoker, tobacco$diseased, prop = "c")
+```
+
+## Other resources
+
+- [Parts 1](https://www.littlemissdata.com/blog/simple-eda) and [2](https://www.littlemissdata.com/blog/simple-eda) on exploratory data anlaysis from Little Miss Data.
